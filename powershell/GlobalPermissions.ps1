@@ -32,22 +32,8 @@ Function New-GlobalPermission {
     # vSphere MOB URL to private enableMethods
     $mob_url = "https://$vc_server/invsvc/mob3/?moid=authorizationService&method=AuthorizationService.AddGlobalAccessControlList"
 
-# Ingore SSL Warnings
-add-type -TypeDefinition  @"
-        using System.Net;
-        using System.Security.Cryptography.X509Certificates;
-        public class TrustAllCertsPolicy : ICertificatePolicy {
-            public bool CheckValidationResult(
-                ServicePoint srvPoint, X509Certificate certificate,
-                WebRequest request, int certificateProblem) {
-                return true;
-            }
-        }
-"@
-[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
-
     # Initial login to vSphere MOB using GET and store session using $vmware variable
-    $results = Invoke-WebRequest -Uri $mob_url -SessionVariable vmware -Credential $credential -Method GET
+    $results = Invoke-WebRequest -Uri $mob_url -SessionVariable vmware -Credential $credential -Method GET -SkipCertificateCheck
 
     # Extract hidden vmware-session-nonce which must be included in future requests to prevent CSRF error
     # Credit to https://blog.netnerds.net/2013/07/use-powershell-to-keep-a-cookiejar-and-post-to-a-web-form/ for parsing vmware-session-nonce via Powershell
@@ -68,11 +54,11 @@ vmware-session-nonce=$sessionnonce&permissions=%3Cpermissions%3E%0D%0A+++%3Cprin
 "@
     # Second request using a POST and specifying our session from initial login + body request
     Write-Host "Adding Global Permission for $vc_user ..."
-    $results = Invoke-WebRequest -Uri $mob_url -WebSession $vmware -Method POST -Body $body
+    $results = Invoke-WebRequest -Uri $mob_url -WebSession $vmware -Method POST -Body $body -SkipCertificateCheck
 
     # Logout out of vSphere MOB
     $mob_logout_url = "https://$vc_server/invsvc/mob3/logout"
-    $results = Invoke-WebRequest -Uri $mob_logout_url -WebSession $vmware -Method GET
+    $results = Invoke-WebRequest -Uri $mob_logout_url -WebSession $vmware -Method GET -SkipCertificateCheck
 }
 
 Function Remove-GlobalPermission {
@@ -105,22 +91,8 @@ Function Remove-GlobalPermission {
     # vSphere MOB URL to private enableMethods
     $mob_url = "https://$vc_server/invsvc/mob3/?moid=authorizationService&method=AuthorizationService.RemoveGlobalAccess"
 
-# Ingore SSL Warnings
-add-type -TypeDefinition  @"
-        using System.Net;
-        using System.Security.Cryptography.X509Certificates;
-        public class TrustAllCertsPolicy : ICertificatePolicy {
-            public bool CheckValidationResult(
-                ServicePoint srvPoint, X509Certificate certificate,
-                WebRequest request, int certificateProblem) {
-                return true;
-            }
-        }
-"@
-[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
-
     # Initial login to vSphere MOB using GET and store session using $vmware variable
-    $results = Invoke-WebRequest -Uri $mob_url -SessionVariable vmware -Credential $credential -Method GET
+    $results = Invoke-WebRequest -Uri $mob_url -SessionVariable vmware -Credential $credential -Method GET -SkipCertificateCheck
 
     # Extract hidden vmware-session-nonce which must be included in future requests to prevent CSRF error
     # Credit to https://blog.netnerds.net/2013/07/use-powershell-to-keep-a-cookiejar-and-post-to-a-web-form/ for parsing vmware-session-nonce via Powershell
@@ -141,11 +113,11 @@ vmware-session-nonce=$sessionnonce&principals=%3Cprincipals%3E%0D%0A+++%3Cname%3
 "@
     # Second request using a POST and specifying our session from initial login + body request
     Write-Host "Removing Global Permission for $vc_user ..."
-    $results = Invoke-WebRequest -Uri $mob_url -WebSession $vmware -Method POST -Body $body
+    $results = Invoke-WebRequest -Uri $mob_url -WebSession $vmware -Method POST -Body $body -SkipCertificateCheck
 
     # Logout out of vSphere MOB
     $mob_logout_url = "https://$vc_server/invsvc/mob3/logout"
-    $results = Invoke-WebRequest -Uri $mob_logout_url -WebSession $vmware -Method GET
+    $results = Invoke-WebRequest -Uri $mob_logout_url -WebSession $vmware -Method GET -SkipCertificateCheck
 }
 
 ### Sample Usage of Enable/Disable functions ###
